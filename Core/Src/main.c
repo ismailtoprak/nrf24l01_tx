@@ -60,8 +60,6 @@ static void MX_SPI1_Init(void);
 uint64_t TxpipeAddrs = 0x223344AA223344AA;
 uint64_t RxpipeAddrs = 0xFE6B2840FE6B2840;
 uint8_t myTxData[32] = {0};
-char AckPayload[32];
-uint8_t pipeAddrs[6];
 
 /* USER CODE END 0 */
 
@@ -72,7 +70,7 @@ uint8_t pipeAddrs[6];
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	uint8_t nrf_status;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -102,31 +100,31 @@ int main(void)
 	NRF24_stopListening();
 	NRF24_openWritingPipe(TxpipeAddrs);
 	NRF24_openReadingPipe(1, RxpipeAddrs);
-	NRF24_setAutoAck(true);
+//	NRF24_setAutoAck(true);
 	NRF24_setChannel(52);
 	NRF24_setPayloadSize(32);
 
 //	NRF24_enableDynamicPayloads();
-	NRF24_enableAckPayload();
+//	NRF24_enableAckPayload();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  NRF24_read_registerN(0x0A, pipeAddrs, 5);
-	  NRF24_read_registerN(0x0A+6, pipeAddrs, 5);
-	  nrf_status = NRF24_get_status();
     /* USER CODE END WHILE */
 
-	  for(int i=0; i<32; i++)myTxData[i] = myTxData[i]+1;
     /* USER CODE BEGIN 3 */
 	if(NRF24_write(myTxData, 32))
 	{
-//		NRF24_read(AckPayload, 32);
+		NRF24_startListening();
+		NRF24_DelayMicroSeconds(150);
+		while(!NRF24_available())
+		NRF24_read(myTxData, 32);
+		NRF24_stopListening();
+		NRF24_DelayMicroSeconds(150);
 	}
-
-	HAL_Delay(1000);
+	HAL_Delay(200);
   }
   /* USER CODE END 3 */
 }
@@ -192,7 +190,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
